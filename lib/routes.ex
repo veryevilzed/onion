@@ -19,18 +19,6 @@ defmodule Onion.Routes do
                                 end
 							end
 						end
-
-                        def init({:tcp, :http}, req, extra) do
-                            a = %Args{middlewares: {unquote(middlewares),[]}, cowboy: req} 
-                                |> put_in([:request, :extra], extra)
-                            {:ok, req, cmd: extra, a}
-                        end
-
-
-                        def handle(req, args) do
-                            
-                        end
-
 					end
 				end
 			end
@@ -47,7 +35,8 @@ defmodule Onion.Routes do
                         require Logger
 
                         def init({:tcp, :http}, req, extra) do
-                            a = %Args{middlewares: {unquote(middlewares),[]}, cowboy: req} 
+                            ms = Dict.get(extra, middlewares, []) ++ unquote(middlewares) 
+                            a = %Args{middlewares: {ms,[]}, cowboy: req} 
                                 |> put_in([:request, :extra], extra)
                             {:ok, req, a}
                         end
