@@ -59,9 +59,7 @@ defmodule Onion.Core do
 	        defmacro macro_get_compiled_routes(routes) do
 	            quote unquote: false do
 	                def get_compiled_routes do
-	                	IO.puts("Routes.1 #{inspect unquote(Macro.escape routes)}")
 	                	_routes = Enum.map unquote(Macro.escape routes), fn(route) ->
-	                		IO.puts("Routes.1.1 try to apply #{inspect route}")
 	                		apply(route, :get_routes, [])
 	                	end
 	                	IO.puts("Routes.2 #{inspect _routes |> List.flatten}")

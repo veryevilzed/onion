@@ -1,6 +1,5 @@
 import Onion
 
-
 defmiddleware Non404 do
 	def process(:out, state, opts) do
 		IO.puts "HELLO"

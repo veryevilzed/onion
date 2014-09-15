@@ -2,10 +2,13 @@ defmodule Onion.Routes do
 	defmacro __using__(_options) do
 		quote location: :keep do
 			defmacro defhandler name, opts \\ [], code do
+                _handler_middlewares = Dict.get(opts, :middlewares, [])
 				quote do 
 					defmodule unquote(name) do
-						routes = []
-						unquote(code)
+						
+                        routes = []
+                        
+                        unquote(code)
 						macro_get_routes(routes)
 
 						def get_routes do
@@ -16,14 +19,28 @@ defmodule Onion.Routes do
                                 end
 							end
 						end
+
+                        def init({:tcp, :http}, req, extra) do
+                            a = %Args{middlewares: {unquote(middlewares),[]}, cowboy: req} 
+                                |> put_in([:request, :extra], extra)
+                            {:ok, req, cmd: extra, a}
+                        end
+
+
+                        def handle(req, args) do
+                            
+                        end
+
 					end
 				end
 			end
+
 
 			defmacro route path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
                 middlewares = Dict.get(opts, :middlewares, [])
 				quote do
+
 					routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
 					defmodule unquote(name) do
 						alias Onion.Args, as: Args
@@ -71,6 +88,7 @@ defmodule Onion.Routes do
 					end
 				end
 			end #defmacro
+
 
             defmacro macro_get_routes(routes) do
                 quote unquote: false do
