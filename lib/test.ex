@@ -15,7 +15,6 @@ end
 
 defmiddleware Text do
 	def process(:in, state, opts) do
-		#state |> put_in([:response, :body], "Text [#{inspect opts}]")
 		state |> reply(200, opts) |> break!
 	end
 end
@@ -27,9 +26,13 @@ defmiddleware Out do
 end
 
 
+
 defhandler Route1, middlewares: [Error] do
-	route "/", middlewares: [Text.init("hh")]
-	route "/bb", middlewares: [Out.init("Wortkd!")]
+
+	alls = [Out.init("Wortkd!")]
+
+	route "/", middlewares: [Text.init("hh"), alls]
+	route "/bb", middlewares: [Out.init("Wortkd!"), alls]
 end
 
 defserver Server1 do

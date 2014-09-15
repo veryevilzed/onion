@@ -12,7 +12,7 @@ defmodule Onion.Routes do
 
 						def get_routes do
 							Enum.map _routes, fn({path, route, extra})->
-                                middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, [])
+                                middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) |> List.flatten
                                 extra = %{(extra |> Enum.into(%{})) | middlewares: middlewares} 
                                 myname = case {Atom.to_string(route), Atom.to_string(unquote(name))} do
                                     {"Elixir." <> sname, "Elixir." <> rname} -> {path, :"Elixir.#{rname}.#{sname}", extra}
@@ -36,11 +36,6 @@ defmodule Onion.Routes do
                         require Logger
 
                         def init({:tcp, :http}, req, extra) do
-                            IO.puts "EXTRA #{inspect extra}"
-                            # ms = case Dict.get(extra, :middlewares, nil) do
-                            #      nil -> unquote(middlewares)
-                            #      global_middlewares -> global_middlewares ++ unquote(middlewares) 
-                            # end
                             a = %Args{middlewares: {Dict.get(extra, :middlewares, []),[]}, cowboy: req} 
                                 |> put_in([:request, :extra], extra)
                             {:ok, req, a}
