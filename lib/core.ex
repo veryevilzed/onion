@@ -1,6 +1,12 @@
 defmodule Onion.Core do
 	defmacro __using__(_option) do
 		quote location: :keep do
+			@doc """
+			Create server instance 
+			args:
+				port: 8080 - port
+				max_acceptors: uuid - acceptors name
+			"""
 			defmacro defserver name, args \\ [], code do				
 
                 config_name = Dict.get args, :config, :onion 
@@ -50,6 +56,14 @@ defmodule Onion.Core do
 				end
 			end
 
+			@doc """
+			Create handler into server
+			--------------------------
+			
+			defserver Server1 do
+				handler Handler1
+			end
+			"""
 			defmacro handler module, opts \\ [] do
 				quote do
 					routes = [unquote(module) | routes]

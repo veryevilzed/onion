@@ -92,3 +92,16 @@ curl http://localhost:9000/
 ```
 
 Enjoy!
+
+
+Description
+-----------
+
+middleware helpers
+
+break(state)  - break all incoming middlewares
+break!(state) - break all incoming and outgoing middlewares
+
+
+
+
