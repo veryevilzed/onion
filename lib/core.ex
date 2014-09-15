@@ -6,7 +6,7 @@ defmodule Onion.Core do
                 config_name = Dict.get args, :config, :onion 
                 config = Application.get_all_env config_name
                 port = Dict.get args, :port, Dict.get(config, :port, 8080)
-                listener_name = Dict.get args, :listener_name, Dict.get(config, :listener_name, :http_listener)
+                listener_name = Dict.get args, :listener_name, Dict.get(config, :listener_name, :"listener_#{U.uuid}")
                 max_acceptors = Dict.get args, :max_acceptors, Dict.get(config, :max_acceptor, 5000)
                 max_connections = Dict.get args, :max_connections, Dict.get(config, :max_connection, 8192)
                 max_keepalive = Dict.get args, :max_keepalive, Dict.get(config, :max_keepalive, 4096)

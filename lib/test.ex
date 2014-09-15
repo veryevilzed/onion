@@ -39,4 +39,7 @@ defserver Server1 do
 	handler Route1
 end
 
+defserver Server2, port: 9000 do
+	handler Route1
+end
 

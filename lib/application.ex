@@ -12,6 +12,7 @@ defmodule Onion.Application do
     ]
 
     Server1.start
+    Server2.start
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
