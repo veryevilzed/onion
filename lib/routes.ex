@@ -40,13 +40,23 @@ defmodule Onion.Routes do
 
                         defp process_out(args=%Args{ middlewares: {_, []} }), do: args
                         defp process_out(args=%Args{ middlewares: {inm, [middleware|tail]} }) do
-                            args = %{ args | middlewares: {inm, tail}}
-                            args = apply(middleware, :process, [:out, args])
+                            args = %{ args | middlewares: {inm, tail} }
+                            args = case middleware do
+                                {middleware, opts} -> apply(middleware, :process, [:out, args, opts])
+                                middleware -> apply(middleware, :process, [:out, args, []])
+                            end
+
                             process_out(args)
                         end
                         defp process_in(args) do
                             case take_request_middleware(args) do
-                                {:ok, middleware, args} -> process_in(apply(middleware, :process, [:in, args]))
+                                {:ok, middleware, args} -> 
+                                    args = case middleware do
+                                        {middleware, opts} -> process_in(apply(middleware, :process, [:in, args, opts]))
+                                        middleware -> process_in(apply(middleware, :process, [:in, args, []]))
+                                    end
+
+                                    process_in(apply(middleware, :process, [:in, args]))
                                 {:empty, args} ->  process_out(args)
                             end                       
                         end

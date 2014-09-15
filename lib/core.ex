@@ -11,6 +11,8 @@ defmodule Onion.Core do
                 max_connections = Dict.get args, :max_connections, Dict.get(config, :max_connection, 8192)
                 max_keepalive = Dict.get args, :max_keepalive, Dict.get(config, :max_keepalive, 4096)
                 backlog =  Dict.get args, :backlog, Dict.get(config, :backlog, 4096)
+                middlewares = Dict.get args, :middlewares, []
+                extra = Dict.get args, :extra, []
 
 				quote do
 					defmodule unquote(name) do						
