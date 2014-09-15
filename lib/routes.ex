@@ -2,7 +2,6 @@ defmodule Onion.Routes do
 	defmacro __using__(_options) do
 		quote location: :keep do
 			defmacro defhandler name, opts \\ [], code do
-                _handler_middlewares = Dict.get(opts, :middlewares, [])
 				quote do 
 					defmodule unquote(name) do
 						
@@ -13,6 +12,8 @@ defmodule Onion.Routes do
 
 						def get_routes do
 							Enum.map _routes, fn({path, route, extra})->
+                                middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, [])
+                                extra = %{(extra |> Enum.into(%{})) | middlewares: middlewares} 
                                 myname = case {Atom.to_string(route), Atom.to_string(unquote(name))} do
                                     {"Elixir." <> sname, "Elixir." <> rname} -> {path, :"Elixir.#{rname}.#{sname}", extra}
                                     {sname, _}-> {path, :"#{sname}", extra}
@@ -26,7 +27,7 @@ defmodule Onion.Routes do
 
 			defmacro route path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
-                middlewares = Dict.get(opts, :middlewares, [])
+                #middlewares = Dict.get(opts, :middlewares, [])
 				quote do
 
 					routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
@@ -35,8 +36,12 @@ defmodule Onion.Routes do
                         require Logger
 
                         def init({:tcp, :http}, req, extra) do
-                            ms = Dict.get(extra, middlewares, []) ++ unquote(middlewares) 
-                            a = %Args{middlewares: {ms,[]}, cowboy: req} 
+                            IO.puts "EXTRA #{inspect extra}"
+                            # ms = case Dict.get(extra, :middlewares, nil) do
+                            #      nil -> unquote(middlewares)
+                            #      global_middlewares -> global_middlewares ++ unquote(middlewares) 
+                            # end
+                            a = %Args{middlewares: {Dict.get(extra, :middlewares, []),[]}, cowboy: req} 
                                 |> put_in([:request, :extra], extra)
                             {:ok, req, a}
                         end
@@ -51,7 +56,6 @@ defmodule Onion.Routes do
                                 {middleware, opts} -> apply(middleware, :process, [:out, args, opts])
                                 middleware -> apply(middleware, :process, [:out, args, []])
                             end
-
                             process_out(args)
                         end
                         defp process_in(args) do
@@ -59,15 +63,16 @@ defmodule Onion.Routes do
                                 {:ok, middleware, args} -> 
                                     args = case middleware do
                                         {middleware, opts} -> process_in(apply(middleware, :process, [:in, args, opts]))
-                                        middleware -> process_in(apply(middleware, :process, [:in, args, []]))
+                                        middleware ->         process_in(apply(middleware, :process, [:in, args, []]  ))
                                     end
-
-                                    process_in(apply(middleware, :process, [:in, args]))
-                                {:empty, args} ->  process_out(args)
+                                {:empty, args} ->
+                                  IO.puts "OUT -->"
+                                  process_out(args)
                             end                       
                         end
 
-                        def handle(req, args) do
+                        def handle(req, args = %Args{middlewares: {a, b}} ) do
+                            IO.puts "Len = #{a |> length} / #{b |> length}"
                             %Args{response: %{code: code, headers: headers, body: body} } = process_in(args)
                             {:ok, req} = :cowboy_req.reply(code, headers, body, req)
                             {:ok, req, args}

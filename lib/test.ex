@@ -1,32 +1,35 @@
 import Onion
 
+defmiddleware Error do
+	def process(:out, state, opts) do
+		state |> reply 500, "ERROR" 
+	end	
+end
+
 defmiddleware Non404 do
 	def process(:out, state, opts) do
-		IO.puts "HELLO"
-		state
-			|> put_in([:response, :code], 200)
-			|> put_in([:response, :body], "HELP: #{inspect opts}" )
+		state |> put_in([:response, :code], 500)	
 	end
-
-	def process(:in, state, opts), do: state
 
 end
 
 defmiddleware Text do
-	def process(:out, state, opts) do
-		IO.puts "Text"
-		state |> put_in([:response, :body], "Text")
+	def process(:in, state, opts) do
+		#state |> put_in([:response, :body], "Text [#{inspect opts}]")
+		state |> reply(200, opts) |> break!
 	end
 end
 
-defhandler Route1, middlewares: [Test] do
-	route "/", middlewares: [
-		Non404.init(
-			a: 5,
-			b: 12,
-			c: "Hello"
-		)
-	]
+defmiddleware Out do
+	def process(:in, state, opts) do
+		state |> reply(200, opts) |> break!
+	end
+end
+
+
+defhandler Route1, middlewares: [Error] do
+	route "/", middlewares: [Text.init("hh")]
+	route "/bb", middlewares: [Out.init("Wortkd!")]
 end
 
 defserver Server1 do
