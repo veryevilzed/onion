@@ -9,7 +9,6 @@ defmodule Onion.Middlewares do
 
 						unquote(code)
 
-						def process(_, args), do: args
 						def process(_, args, _), do: args
 					end
 				end
