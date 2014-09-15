@@ -62,7 +62,6 @@ defmodule Onion.Core do
 	                	_routes = Enum.map unquote(Macro.escape routes), fn(route) ->
 	                		apply(route, :get_routes, [])
 	                	end
-	                	IO.puts("Routes.2 #{inspect _routes |> List.flatten}")
 	                    :cowboy_router.compile([_: _routes |> List.flatten ])
 	                end 
 	            end

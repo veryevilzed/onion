@@ -61,13 +61,11 @@ defmodule Onion.Routes do
                                         middleware ->         process_in(apply(middleware, :process, [:in, args, []]  ))
                                     end
                                 {:empty, args} ->
-                                  IO.puts "OUT -->"
                                   process_out(args)
                             end                       
                         end
 
                         def handle(req, args = %Args{middlewares: {a, b}} ) do
-                            IO.puts "Len = #{a |> length} / #{b |> length}"
                             %Args{response: %{code: code, headers: headers, body: body} } = process_in(args)
                             {:ok, req} = :cowboy_req.reply(code, headers, body, req)
                             {:ok, req, args}
