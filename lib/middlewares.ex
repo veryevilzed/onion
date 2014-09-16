@@ -2,6 +2,14 @@ defmodule Onion.Middlewares do
 	defmacro __using__(_opts) do
 		quote location: :keep do
 			defmacro defmiddleware name, opts \\ [], code do
+				required = Dict.get opts, :required, []
+				chain_type = case Dict.get opts, :chain_type, :only do
+					:only_args -> :only_args
+					1 -> :only_args
+					:all -> :all
+					2 -> :all
+					_ -> :only
+				end
 				quote do
 					defmodule unquote(name) do
 						alias Onion.Args, as: Args
@@ -14,12 +22,12 @@ defmodule Onion.Middlewares do
 
 						def init(args \\ []), do: {unquote(name), args}
 
+						def required, do: unquote(required)
+						def chain_type, do: unquote(chain_type)
 
 						unquote(code)
 
 						def process(_, state, _), do: state
-
-
 
 					end
 				end
