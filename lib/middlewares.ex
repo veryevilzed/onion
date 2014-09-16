@@ -29,6 +29,7 @@ defmodule Onion.Middlewares do
 
 						def process(_, state, _), do: state
 
+						defoverridable [init: 1]
 					end
 				end
  			end
