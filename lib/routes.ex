@@ -29,7 +29,7 @@ defmodule Onion.Routes do
                         defp required_middlewares([middleware|middlewares], res) do
                             case required(middleware) do
                                 [] -> required_middlewares(middlewares, [ middleware| res ])
-                                [single] -> equired_middlewares(middleware,  [middleware, single|res])
+                                [single] -> required_middlewares(middleware,  [middleware, single|res])
                                 reqs -> required_middlewares(middleware,  middleware ++ reqs ++ res)
                             end
                         end
@@ -50,7 +50,7 @@ defmodule Onion.Routes do
                             end
                         end
 
-                        defp filter_middlewares([], res), do: res
+                        defp filter_middlewares([], res), do: res |> Enum.reverse
                         defp filter_middlewares([m={middleware, args}|middlewares], res) do
                             case {in_middles(middleware, res), chain_type(middleware)}   do
                                 {true, :single}    ->   filter_middlewares(middlewares, res)
@@ -65,8 +65,7 @@ defmodule Onion.Routes do
                         end
                         defp filter_middlewares([middleware|middlewares], res) do
                             case {in_middles(middleware, res), chain_type(middleware)}   do
-                                {true, :only} ->   filter_middlewares(middlewares, res)
-                                
+                                {true, :only} ->   filter_middlewares(middlewares, res)                                
                                 {true, _} ->       filter_middlewares(middlewares, res)
                                 {_, :all} ->       filter_middlewares(middlewares, [middlewares | res])
                                 {false, _} ->      filter_middlewares(middlewares, [middlewares | res])
@@ -78,7 +77,7 @@ defmodule Onion.Routes do
                                 middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) |> List.flatten
 
                                 # Достроим Requireds
-                                middlewares = middlewares |> required_middlewares |> filter_middlewares
+                                middlewares = middlewares |> required_middlewares |> filter_middlewares []
 
 
                                 extra = %{(extra |> Enum.into(%{})) | middlewares: middlewares} 
