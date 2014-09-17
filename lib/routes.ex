@@ -42,7 +42,7 @@ defmodule Onion.Routes do
                             end
                         end
 
-                        defp in_middles(middle, []) do: false
+                        defp in_middles(middle, []), do: false
                         defp in_middles(middle, [head|tail]) do
                             case head do
                                 {^middle, _} -> true
