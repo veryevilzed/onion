@@ -26,24 +26,6 @@ defmodule Onion.Routes do
                             end
                         end
 
-
-                        defp required_middlewares([], res), do: res |> Enum.reverse
-                        defp required_middlewares([middleware|middlewares], res) do
-                            case required(middleware) do
-                                []        -> required_middlewares(middlewares, [middleware | res])
-                                [single]  -> required_middlewares(middlewares, [middleware, single | res])
-                                reqs      -> required_middlewares(middlewares, [middleware] ++ reqs ++ res)
-                            end
-                        end
-
-                        defp required_middlewares(middlewares) do
-                            new_midlwares = required_middlewares(middlewares, []) |> filter_middlewares([])
-                            case middlewares == new_midlwares do
-                                true ->  middlewares
-                                false -> required_middlewares(new_midlwares)
-                            end
-                        end
-
                         defp in_middles(middle, []), do: false
                         defp in_middles(middle, [head|tail]) do
                             case head do
@@ -75,12 +57,23 @@ defmodule Onion.Routes do
                             end
                         end
 
+
+                        defp required_middlewares(middleware) do
+                            req = required middleware
+                            case req do
+                                [] -> [middleware]
+                                req -> Enum.map(req, fn(x) -> required_middlewares x end) ++ [middleware]
+                            end
+                        end
+
 						def get_routes do
 							Enum.map _routes, fn({path, route, extra})->
                                 middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) 
                                 
                                 # Достроим Requireds
-                                middlewares = middlewares |> required_middlewares |> List.flatten
+                                middlewares = Enum.map(middlewares, fn(x)-> required_middlewares x end) |> List.flatten |> filter_middlewares []
+                                IO.puts "MIDDLEWARES: #{inspect middlewares}"
+                                #middlewares = middlewares |> required_middlewares |> List.flatten
                                 extra = %{(extra |> Enum.into(%{})) | middlewares: middlewares} 
                                 myname = case {Atom.to_string(route), Atom.to_string(unquote(name))} do
                                     {"Elixir." <> sname, "Elixir." <> rname} -> {path, :"Elixir.#{rname}.#{sname}", extra}
