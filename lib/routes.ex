@@ -31,7 +31,7 @@ defmodule Onion.Routes do
                         defp required_middlewares([middleware|middlewares], res) do
                             case required(middleware) do
                                 []        -> required_middlewares(middlewares, [middleware | res])
-                                #[single] -> required_middlewares(middlewares, [middleware, single | res])
+                                [single]  -> required_middlewares(middlewares, [middleware, single | res])
                                 reqs      -> required_middlewares(middlewares, [middleware] ++ reqs ++ res)
                             end
                         end
