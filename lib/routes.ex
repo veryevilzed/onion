@@ -30,16 +30,16 @@ defmodule Onion.Routes do
                         defp required_middlewares([], res), do: res |> Enum.reverse
                         defp required_middlewares([middleware|middlewares], res) do
                             case required(middleware) do
-                                [] -> required_middlewares(middlewares, [ middleware| res ])
-                                [single] -> required_middlewares(middleware,  [middleware, single|res])
-                                reqs -> required_middlewares(middleware,  middleware ++ reqs ++ res)
+                                []        -> required_middlewares(middlewares, [middleware | res])
+                                #[single] -> required_middlewares(middlewares, [middleware, single | res])
+                                reqs      -> required_middlewares(middlewares, [middleware] ++ reqs ++ res)
                             end
                         end
 
                         defp required_middlewares(middlewares) do
-                            new_midlwares = required_middlewares(middlewares, [])
+                            new_midlwares = required_middlewares(middlewares, []) |> filter_middlewares([])
                             case middlewares == new_midlwares do
-                                true -> middlewares
+                                true ->  middlewares
                                 false -> required_middlewares(new_midlwares)
                             end
                         end
@@ -56,14 +56,14 @@ defmodule Onion.Routes do
                         defp filter_middlewares([], res), do: res |> Enum.reverse
                         defp filter_middlewares([m={middleware, args}|middlewares], res) do
                             case {in_middles(middleware, res), chain_type(middleware)}   do
-                                {true, :single}    ->   filter_middlewares(middlewares, res)
+                                {true, :only}    ->   filter_middlewares(middlewares, res)
                                 {true, :only_args} ->   
                                     case in_middles(m, res) do
-                                        true ->      filter_middlewares(middlewares, res)
-                                        false ->     filter_middlewares(middlewares, [middleware | res])
+                                        true  ->     filter_middlewares(middlewares, res)
+                                        false ->     filter_middlewares(middlewares, [m | res])
                                     end
-                                {_, :all} ->       filter_middlewares(middlewares, [middleware | res])
-                                {false, _} ->      filter_middlewares(middlewares, [middleware | res])
+                                {_, :all}  ->      filter_middlewares(middlewares, [m | res])
+                                {false, _} ->      filter_middlewares(middlewares, [m | res])
                             end
                         end
                         defp filter_middlewares([middleware|middlewares], res) do
@@ -78,9 +78,9 @@ defmodule Onion.Routes do
 						def get_routes do
 							Enum.map _routes, fn({path, route, extra})->
                                 middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) 
-                            
+                                
                                 # Достроим Requireds
-                                middlewares = middlewares |> required_middlewares |> filter_middlewares([]) |> List.flatten
+                                middlewares = middlewares |> required_middlewares |> List.flatten
                                 extra = %{(extra |> Enum.into(%{})) | middlewares: middlewares} 
                                 myname = case {Atom.to_string(route), Atom.to_string(unquote(name))} do
                                     {"Elixir." <> sname, "Elixir." <> rname} -> {path, :"Elixir.#{rname}.#{sname}", extra}
