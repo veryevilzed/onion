@@ -5,6 +5,8 @@ defmodule Onion.Routes do
 				quote do 
 					defmodule unquote(name) do
 						
+                        require Logger
+
                         routes = []
                         
                         unquote(code)
@@ -58,29 +60,27 @@ defmodule Onion.Routes do
                                 {true, :only_args} ->   
                                     case in_middles(m, res) do
                                         true ->      filter_middlewares(middlewares, res)
-                                        false ->     filter_middlewares(middlewares, [middlewares | res])
+                                        false ->     filter_middlewares(middlewares, [middleware | res])
                                     end
-                                {_, :all} ->       filter_middlewares(middlewares, [middlewares | res])
-                                {false, _} ->      filter_middlewares(middlewares, [middlewares | res])
+                                {_, :all} ->       filter_middlewares(middlewares, [middleware | res])
+                                {false, _} ->      filter_middlewares(middlewares, [middleware | res])
                             end
                         end
                         defp filter_middlewares([middleware|middlewares], res) do
                             case {in_middles(middleware, res), chain_type(middleware)}   do
                                 {true, :only} ->   filter_middlewares(middlewares, res)                                
                                 {true, _} ->       filter_middlewares(middlewares, res)
-                                {_, :all} ->       filter_middlewares(middlewares, [middlewares | res])
-                                {false, _} ->      filter_middlewares(middlewares, [middlewares | res])
+                                {_, :all} ->       filter_middlewares(middlewares, [middleware | res])
+                                {false, _} ->      filter_middlewares(middlewares, [middleware | res])
                             end
                         end
 
 						def get_routes do
 							Enum.map _routes, fn({path, route, extra})->
-                                middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) |> List.flatten
-
+                                middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) 
+                            
                                 # Достроим Requireds
-                                middlewares = middlewares |> required_middlewares |> filter_middlewares []
-
-
+                                middlewares = middlewares |> required_middlewares |> filter_middlewares([]) |> List.flatten
                                 extra = %{(extra |> Enum.into(%{})) | middlewares: middlewares} 
                                 myname = case {Atom.to_string(route), Atom.to_string(unquote(name))} do
                                     {"Elixir." <> sname, "Elixir." <> rname} -> {path, :"Elixir.#{rname}.#{sname}", extra}
@@ -95,7 +95,7 @@ defmodule Onion.Routes do
 
 			defmacro route path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
-                #middlewares = Dict.get(opts, :middlewares, [])
+                #_middlewares = Dict.get(opts, :middlewares, [])
 				quote do
 
 					routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
