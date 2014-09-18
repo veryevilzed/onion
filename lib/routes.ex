@@ -5,6 +5,8 @@ defmodule Onion.Routes do
 				quote do 
 					defmodule unquote(name) do
 						
+                        require Logger
+
                         routes = []
                         
                         unquote(code)
@@ -24,24 +26,7 @@ defmodule Onion.Routes do
                             end
                         end
 
-
-                        defp required_middlewares([], res), do: res |> Enum.reverse
-                        defp required_middlewares([middleware|middlewares], res) do
-                            case required(middleware) do
-                                [] -> required_middlewares(middlewares, [ middleware| res ])
-                                [single] -> required_middlewares(middleware,  [middleware, single|res])
-                                reqs -> required_middlewares(middleware,  middleware ++ reqs ++ res)
-                            end
-                        end
-
-                        defp required_middlewares(middlewares) do
-                            new_midlwares = required_middlewares(middlewares, [])
-                            case middlewares == new_midlwares do
-                                true -> middlewares
-                                false -> required_middlewares(new_midlwares)
-                            end
-                        end
-
+                        defp in_middles(middle, []), do: false
                         defp in_middles(middle, [head|tail]) do
                             case head do
                                 {^middle, _} -> true
@@ -53,33 +38,42 @@ defmodule Onion.Routes do
                         defp filter_middlewares([], res), do: res |> Enum.reverse
                         defp filter_middlewares([m={middleware, args}|middlewares], res) do
                             case {in_middles(middleware, res), chain_type(middleware)}   do
-                                {true, :single}    ->   filter_middlewares(middlewares, res)
+                                {true, :only}    ->   filter_middlewares(middlewares, res)
                                 {true, :only_args} ->   
                                     case in_middles(m, res) do
-                                        true ->      filter_middlewares(middlewares, res)
-                                        false ->     filter_middlewares(middlewares, [middlewares | res])
+                                        true  ->     filter_middlewares(middlewares, res)
+                                        false ->     filter_middlewares(middlewares, [m | res])
                                     end
-                                {_, :all} ->       filter_middlewares(middlewares, [middlewares | res])
-                                {false, _} ->      filter_middlewares(middlewares, [middlewares | res])
+                                {_, :all}  ->      filter_middlewares(middlewares, [m | res])
+                                {false, _} ->      filter_middlewares(middlewares, [m | res])
                             end
                         end
                         defp filter_middlewares([middleware|middlewares], res) do
                             case {in_middles(middleware, res), chain_type(middleware)}   do
                                 {true, :only} ->   filter_middlewares(middlewares, res)                                
                                 {true, _} ->       filter_middlewares(middlewares, res)
-                                {_, :all} ->       filter_middlewares(middlewares, [middlewares | res])
-                                {false, _} ->      filter_middlewares(middlewares, [middlewares | res])
+                                {_, :all} ->       filter_middlewares(middlewares, [middleware | res])
+                                {false, _} ->      filter_middlewares(middlewares, [middleware | res])
+                            end
+                        end
+
+
+                        defp required_middlewares(middleware) do
+                            req = required middleware
+                            case req do
+                                [] -> [middleware]
+                                req -> Enum.map(req, fn(x) -> required_middlewares x end) ++ [middleware]
                             end
                         end
 
 						def get_routes do
 							Enum.map _routes, fn({path, route, extra})->
-                                middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) |> List.flatten
-
+                                middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) 
+                                
                                 # Достроим Requireds
-                                middlewares = middlewares |> required_middlewares |> filter_middlewares []
-
-
+                                middlewares = Enum.map(middlewares, fn(x)-> required_middlewares x end) |> List.flatten |> filter_middlewares []
+                                IO.puts "MIDDLEWARES: #{inspect middlewares}"
+                                #middlewares = middlewares |> required_middlewares |> List.flatten
                                 extra = %{(extra |> Enum.into(%{})) | middlewares: middlewares} 
                                 myname = case {Atom.to_string(route), Atom.to_string(unquote(name))} do
                                     {"Elixir." <> sname, "Elixir." <> rname} -> {path, :"Elixir.#{rname}.#{sname}", extra}
@@ -94,7 +88,7 @@ defmodule Onion.Routes do
 
 			defmacro route path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
-                #middlewares = Dict.get(opts, :middlewares, [])
+                #_middlewares = Dict.get(opts, :middlewares, [])
 				quote do
 
 					routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
@@ -133,7 +127,12 @@ defmodule Onion.Routes do
                         end
 
                         def handle(req, args = %Args{middlewares: {a, b}} ) do
-                            %Args{response: %{code: code, headers: headers, body: body} } = process_in(args)
+                            %Args{response: %{code: code, headers: headers, body: body, cookies: cookies} } = process_in(args)
+                            req = Enum.reduce(cookies, req, 
+                                fn({name, value}, acc_req) -> :cowboy_req.set_resp_cookie(name, value, [path: "/"], acc_req);
+                                ({name, path, value}, acc_req) -> :cowboy_req.set_resp_cookie(name, value, [path: path], acc_req)
+                                ({name, path, value, timeout}, acc_req) -> :cowboy_req.set_resp_cookie(name, value, [path: path, max_age: timeout], acc_req)
+                            end)
                             {:ok, req} = :cowboy_req.reply(code, headers, body, req)
                             {:ok, req, args}
                         end

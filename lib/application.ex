@@ -11,9 +11,6 @@ defmodule Onion.Application do
       # worker(Onion.Worker, [arg1, arg2, arg3])
     ]
 
-    Server1.start
-    Server2.start
-
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Onion.Supervisor]
