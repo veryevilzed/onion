@@ -19,15 +19,15 @@ defmodule Onion.Middlewares do
 						defp reply(args = %Args{ response: resp }, code, body), do: %{args | response: %{resp | code: code, body: body} }
 						defp reply(args = %Args{ response: resp }, code, body, []), do: %{args | response: %{resp | code: code, body: body} }
 						defp reply(args = %Args{ response: resp }, code, body, headers=[{_k,_v}|_t]), do: %{args | response: %{resp | code: code, body: body, headers: headers} }
-						defp set_coockie(args = %Args{ response: resp }, name, path, value, timeout) do
-							resp = %{resp | coockies: [{"session", "/", session, timeout}|resp.coockies]}
+						defp set_coockie(state = %Args{ response: resp }, name, path, value, timeout) do
+							resp = %{resp | coockies: [{name, path, value, timeout}|resp.coockies]}
 					        %{ state | response: resp }
 						end						
-						defp set_coockie(args = %Args{ response: resp }, name, path, value) do
-							resp = %{resp | coockies: [{"session", "/", session}|resp.coockies]}
+						defp set_coockie(state = %Args{ response: resp }, name, path, value) do
+							resp = %{resp | coockies: [{name, path, value}|resp.coockies]}
 					        %{ state | response: resp }
 						end						
-						defp set_coockie(args, name, value), do: set_coockie(args, name, "/", value)
+						defp set_coockie(state, name, value), do: set_coockie(state, name, "/", value)
 
 
 						def required, do: unquote(required)

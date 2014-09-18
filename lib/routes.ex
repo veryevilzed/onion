@@ -128,7 +128,7 @@ defmodule Onion.Routes do
 
                         def handle(req, args = %Args{middlewares: {a, b}} ) do
                             %Args{response: %{code: code, headers: headers, body: body, cookies: cookies} } = process_in(args)
-                            req = Enum.reduce(unquote(cookies), req, 
+                            req = Enum.reduce(cookies, req, 
                                 fn({name, value}, acc_req) -> :cowboy_req.set_resp_cookie(name, value, [path: "/"], acc_req);
                                 ({name, path, value}, acc_req) -> :cowboy_req.set_resp_cookie(name, value, [path: path], acc_req)
                                 ({name, path, value, timeout}, acc_req) -> :cowboy_req.set_resp_cookie(name, value, [path: path, max_age: timeout], acc_req)
