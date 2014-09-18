@@ -18,7 +18,7 @@ defmodule Onion.Mixfile do
   defp deps do
     [
       { :cowboy, github: "extend/cowboy" },
-      { :underscorex, git: "git@git.appforge.ru:elixir/underscorex.git"}
+      { :underscorex, github: "veryevilzed/underscorex"}
     ]
   end
 end
