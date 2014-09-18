@@ -17,6 +17,7 @@ defmodule Onion.Args do
 			type: :error, 
 			body: "not implemented", 
 			headers: [{"content-type", "text/plain"}], 
+			cookies: [],
 			extra: %{}
 		}, 
 		context: %{}, 
