@@ -58,6 +58,10 @@ defmodule Onion.Routes do
                         end
 
 
+                        defp required_middlewares(middlewares) when is_list(middlewares) do
+                            Enum.map(middlewares, fn(x) -> required_middlewares x end)
+                        end
+
                         defp required_middlewares(middleware) do
                             req = required middleware
                             case req do
