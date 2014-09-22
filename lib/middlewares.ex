@@ -17,13 +17,12 @@ defmodule Onion.Middlewares do
 						defp break(args = %Args{middlewares: {a,b}}), do: %{ args | middlewares: {[], b} }
 						defp break!(args = %Args{middlewares: {a,b}}), do: %{ args | middlewares: {[], []} }
 
-						defp pass(body, args = %Args{ response: resp }, code), do: reply(args, body, code)
-						defp pass(body, args = %Args{ response: resp }, code, headers), do: reply(args, body, code, headers)
-
 						defp reply(args = %Args{ response: resp }, code), do: %{args | response: %{resp | code: code} }
+						defp reply(body, args = %Args{ response: resp }, code), do: reply(args, code, body)
 						defp reply(args = %Args{ response: resp }, code, body), do: %{args | response: %{resp | code: code, body: body} }
 						defp reply(args = %Args{ response: resp }, code, body, []), do: %{args | response: %{resp | code: code, body: body} }
 						defp reply(args = %Args{ response: resp }, code, body, headers=[{_k,_v}|_t]), do: %{args | response: %{resp | code: code, body: body, headers: headers} }
+						defp reply(body, args = %Args{ response: resp }, code, headers), do: reply(args, code, body, headers)
 
 						defp set_coockie(state = %Args{ response: resp }, name, path, value, timeout) do
 							resp = %{resp | coockies: [{name, path, value, timeout}|resp.coockies]}
