@@ -24,6 +24,10 @@ defmodule Onion.Middlewares do
 						defp reply(args = %Args{ response: resp }, code, body, headers=[{_k,_v}|_t]), do: %{args | response: %{resp | code: code, body: body, headers: headers} }
 						defp reply(body, args = %Args{ response: resp }, code, headers), do: reply(args, code, body, headers)
 
+						defp patch(args = %Args{context: context}, val) when is_map(key), do: %{args | Dict.merge(context, val)}
+						defp patch(args = %Args{context: context}, key, val) when is_atom(key), do: %{args | Dict.put(context, key, val)}
+						defp patch(args = %Args{context: context}, key, val) when is_list(key), do: %{args | put_in(context, key, val)}
+
 						defp set_coockie(state = %Args{ response: resp }, name, path, value, timeout) do
 							resp = %{resp | coockies: [{name, path, value, timeout}|resp.coockies]}
 					        %{ state | response: resp }
