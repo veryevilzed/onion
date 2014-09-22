@@ -31,7 +31,7 @@ defmodule Onion.Routes do
                             case head do
                                 {^middle, _} -> true
                                 ^middle -> true
-                                _ -> false
+                                _ -> in_middles(middle, tail)
                             end
                         end
 
@@ -72,7 +72,8 @@ defmodule Onion.Routes do
 
 						def get_routes do
 							Enum.map _routes, fn({path, route, extra})->
-                                middlewares = Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []) 
+                                middlewares = (Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []))
+                                                 |> filter_middlewares []
                                 
                                 # Достроим Requireds
                                 middlewares = Enum.map(middlewares, fn(x)-> required_middlewares x end) |> List.flatten |> filter_middlewares []

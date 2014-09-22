@@ -16,6 +16,7 @@ defmodule Onion.Middlewares do
 
 						defp break(args = %Args{middlewares: {a,b}}), do: %{ args | middlewares: {[], b} }
 						defp break!(args = %Args{middlewares: {a,b}}), do: %{ args | middlewares: {[], []} }
+						defp reply(args = %Args{ response: resp }, code), do: %{args | response: %{resp | code: code} }
 						defp reply(args = %Args{ response: resp }, code, body), do: %{args | response: %{resp | code: code, body: body} }
 						defp reply(args = %Args{ response: resp }, code, body, []), do: %{args | response: %{resp | code: code, body: body} }
 						defp reply(args = %Args{ response: resp }, code, body, headers=[{_k,_v}|_t]), do: %{args | response: %{resp | code: code, body: body, headers: headers} }
