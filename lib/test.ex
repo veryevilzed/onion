@@ -1,45 +1,29 @@
-# import Onion
+import Onion
 
-# defmiddleware Error do
-# 	def process(:out, state, opts) do
-# 		state |> reply 500, "ERROR" 
-# 	end	
-# end
+defmiddleware Out do
+    def process(:in, state = %{response: %{code: 404}}, opts) do
+        state |> reply(200, "Page not found !")
+    end
 
-# defmiddleware Non404 do
-# 	def process(:out, state, opts) do
-# 		state |> put_in([:response, :code], 500)	
-# 	end
+end
 
-# end
-
-# defmiddleware Text do
-# 	def process(:in, state, opts) do
-# 		state |> reply(200, opts) |> break!
-# 	end
-# end
-
-# defmiddleware Out do
-# 	def process(:in, state, opts) do
-# 		state |> reply(200, opts) |> break!
-# 	end
-# end
+defmiddleware Empty, required: [Out] do
+end
 
 
+defmiddleware Reply, required: [Out] do
+    def process(:in, state, opts) do
+        state |> reply(200, opts)
+    end
+end
 
-# defhandler Route1, middlewares: [Error] do
+defhandler Route1 do 
 
-# 	alls = [Out.init("Wortkd!")]
+    route "/", middlewares: [ Reply.init("Hello World!") ]
+    route "/[...]", middlewares: [ Empty ]
+end
 
-# 	route "/", middlewares: [Text.init("hh"), alls]
-# 	route "/bb", middlewares: [Out.init("Wortkd!"), alls]
-# end
-
-# defserver Server1 do
-# 	handler Route1
-# end
-
-# defserver Server2, port: 9000 do
-# 	handler Route1
-# end
+defserver Server1, port: 9000 do
+    handler Route1
+end
 

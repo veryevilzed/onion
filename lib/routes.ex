@@ -12,78 +12,20 @@ defmodule Onion.Routes do
                         unquote(code)
 						macro_get_routes(routes)
 
-                        defp required(middleware) do
-                            case middleware do
-                                {middle, _} -> middle.required
-                                middle -> middle.required
-                            end
-                        end
-
-                        defp chain_type(middleware) do
-                            case middleware do
-                                {middle, _} -> middle.chain_type
-                                middle -> middle.chain_type
-                            end
-                        end
-
-                        defp in_middles(middle, []), do: false
-                        defp in_middles(middle, [head|tail]) do
-                            case head do
-                                {^middle, _} -> true
-                                ^middle -> true
-                                _ -> in_middles(middle, tail)
-                            end
-                        end
-
-                        defp filter_middlewares([], res), do: res |> Enum.reverse
-                        defp filter_middlewares([m={middleware, args}|middlewares], res) do
-                            case {in_middles(middleware, res), chain_type(middleware)}   do
-                                {true, :only}    ->   filter_middlewares(middlewares, res)
-                                {true, :only_args} ->   
-                                    case in_middles(m, res) do
-                                        true  ->     filter_middlewares(middlewares, res)
-                                        false ->     filter_middlewares(middlewares, [m | res])
-                                    end
-                                {_, :all}  ->      filter_middlewares(middlewares, [m | res])
-                                {false, _} ->      filter_middlewares(middlewares, [m | res])
-                            end
-                        end
-                        defp filter_middlewares([middleware|middlewares], res) do
-                            case {in_middles(middleware, res), chain_type(middleware)}   do
-                                {true, :only} ->   filter_middlewares(middlewares, res)                                
-                                {true, _} ->       filter_middlewares(middlewares, res)
-                                {_, :all} ->       filter_middlewares(middlewares, [middleware | res])
-                                {false, _} ->      filter_middlewares(middlewares, [middleware | res])
-                            end
-                        end
-
-
-                        defp required_middlewares(middlewares) when is_list(middlewares) do
-                            Enum.map(middlewares, fn(x) -> required_middlewares x end)
-                        end
-
-                        defp required_middlewares(middleware) do
-                            req = required middleware
-                            case req do
-                                [] -> [middleware]
-                                req -> Enum.map(req, fn(x) -> required_middlewares x end) ++ [middleware]
-                            end
-                        end
+                        use Onion.Requireds
 
 						def get_routes do
-							Enum.map _routes, fn({path, route, extra})->
+							Enum.map(_routes, fn({path, route, extra})->
                                 middlewares = (Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []))
                                 
                                 # Достроим Requireds
                                 middlewares = Enum.map(middlewares, fn(x)-> required_middlewares x end) |> List.flatten |> filter_middlewares []
-                                IO.puts "MIDDLEWARES: #{inspect middlewares}"
-                                #middlewares = middlewares |> required_middlewares |> List.flatten
                                 extra = %{(extra |> Enum.into(%{})) | middlewares: middlewares} 
                                 myname = case {Atom.to_string(route), Atom.to_string(unquote(name))} do
                                     {"Elixir." <> sname, "Elixir." <> rname} -> {path, :"Elixir.#{rname}.#{sname}", extra}
                                     {sname, _}-> {path, :"#{sname}", extra}
                                 end
-							end
+							end) |> Enum.reverse
 						end
 					end
 				end
@@ -92,7 +34,6 @@ defmodule Onion.Routes do
 
 			defmacro route path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
-                #_middlewares = Dict.get(opts, :middlewares, [])
 				quote do
 
 					routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
