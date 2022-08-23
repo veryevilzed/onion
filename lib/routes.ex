@@ -119,8 +119,8 @@ defmodule Onion.Routes do
                             {:loop, req, state, unquote(timeout), :hibernate}
                         end
 
-                        def info({:done, state}, req, _) when unquote(chunked) == false do
-                            %Args{response: %{code: code, headers: headers, body: body}} = process_out(state)
+                        def info({:done, _state}, req, state) when unquote(chunked) == false do
+                            %Args{response: %{code: code, headers: headers, body: body}} = process_out(_state)
                             {:ok, req} = :cowboy_req.reply(code, headers, body, req)
                             {:ok, req, state}
                         end
