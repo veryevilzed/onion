@@ -1,21 +1,21 @@
 defmodule Onion.Routes do
-	defmacro __using__(_options) do
-		quote location: :keep do
-			defmacro defhandler name, opts \\ [], code do
-				quote do 
-					defmodule unquote(name) do
-						
+    defmacro __using__(_options) do
+        quote location: :keep do
+            defmacro defhandler name, opts \\ [], code do
+                quote do 
+                    defmodule unquote(name) do
+
                         require Logger
 
                         routes = []
                         
                         unquote(code)
-						macro_get_routes(routes)
+                        macro_get_routes(routes)
 
                         use Onion.Requireds
 
-						def get_routes do
-							Enum.map(_routes, fn({path, route, extra})->
+                        def get_routes do
+                            Enum.map(_routes, fn({path, route, extra})->
                                 middlewares = (Dict.get(unquote(opts), :middlewares, []) ++ Dict.get(extra, :middlewares, []))
                                 
                                 # Достроим Requireds
@@ -25,20 +25,20 @@ defmodule Onion.Routes do
                                     {"Elixir." <> sname, "Elixir." <> rname} -> {path, :"Elixir.#{rname}.#{sname}", extra}
                                     {sname, _}-> {path, :"#{sname}", extra}
                                 end
-							end) |> Enum.reverse
-						end
-					end
-				end
-			end
+                            end) |> Enum.reverse
+                        end
+                    end
+                end
+            end
 
 
-			defmacro route path, opts do
+            defmacro route path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
-				quote do
+                quote do
 
-					routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
-					defmodule unquote(name) do
-						alias Onion.Args, as: Args
+                    routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
+                    defmodule unquote(name) do
+                        alias Onion.Args, as: Args
                         require Logger
 
                         def init({:tcp, :http}, req, extra) do
@@ -83,15 +83,16 @@ defmodule Onion.Routes do
                         end
 
                         def terminate(_, _, _), do: :ok
-					end
-				end
-			end #defmacro
+                    end
+                end
+            end #defmacro
 
             defmacro pooling path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
                 timeout = Dict.get(opts, :timeout, 5000)
                 chunked = Dict.get(opts, :chunked, false)
                 chunked_headers = Dict.get(opts, :chunked_headers, [])
+                module = Dict.get(opts, :loop, nil)
                 quote do
 
                     routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
@@ -101,10 +102,6 @@ defmodule Onion.Routes do
 
                         def init({:tcp, :http}, req, args) do
                             pid = elem(req, 4)
-                            {module, opts} = case Dict.get(args, :loop, nil) do
-                                {module, opts} -> {module, opts}
-                                module -> {module, nil}
-                            end
                             state = %Args{request: %{extra: Dict.put(args, :pid, pid)}, cowboy: req,
                                 middlewares: {Dict.get(args, :middlewares, []),[]}} 
                                 |> process_in
@@ -112,10 +109,13 @@ defmodule Onion.Routes do
                                 true -> :cowboy_req.chunked_reply(200, unquote(chunked_headers), req)
                                 _ -> {:ok, req}
                             end
-                            state = Keyword.has_key?(module.__info__(:functions), :begin) && apply(module, :begin, [state, opts]) || state
-                            task = spawn fn -> apply(module, :loop, [state, opts]) end
+                            nstate = Keyword.has_key?(unquote(module).__info__(:functions), :begin) && apply(unquote(module), :begin, [state])
+                            state = case nstate do
+                                %Args{} -> nstate
+                                _ -> state
+                            end
+                            task = spawn fn -> apply(unquote(module), :loop, [state, nil]) end
                             state = put_in(state, [:response, :extra, :pid], task)
-                                |> put_in([:response, :extra, :module], module)
                             {:loop, req, state, unquote(timeout), :hibernate}
                         end
 
@@ -155,15 +155,15 @@ defmodule Onion.Routes do
                             process_out(args)
                         end
 
-                        def terminate(_, _, state = %{response: %{extra: %{pid: task, module: module}}}) do 
-                            if Keyword.has_key?(module.__info__(:functions), :done), do: 
-                                apply(module, :done, [state])
+                        def terminate(_, _, state = %{response: %{extra: %{pid: task}}}) do 
+                            if Keyword.has_key?(unquote(module).__info__(:functions), :done), do: 
+                                apply(unquote(module), :done, [state, task])
                             Process.exit(task, :kill)
                             :ok
                         end
-                        def terminate(_, _, state = %{response: %{extra: %{module: module}}}) do 
-                            if Keyword.has_key?(module.__info__(:functions), :done), do: 
-                                apply(module, :done, [state])
+                        def terminate(_, _, state) do 
+                            if Keyword.has_key?(unquote(module).__info__(:functions), :done), do: 
+                                apply(unquote(module), :done, [state, nil])
                             :ok
                         end
                         def terminate(_, _, _), do: :ok
@@ -179,6 +179,6 @@ defmodule Onion.Routes do
                 end
             end
 
-		end #quote
-	end #__using__
+        end #quote
+    end #__using__
 end
