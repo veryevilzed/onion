@@ -87,7 +87,7 @@ defmodule Onion.Routes do
 				end
 			end #defmacro
 
-            defmacro loop path, opts do
+            defmacro pooling path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
                 timeout = Dict.get(opts, :timeout, 5000)
                 chunked = Dict.get(opts, :chunked, false)
@@ -125,11 +125,12 @@ defmodule Onion.Routes do
                             {:ok, req, state}
                         end
                         def info({:done, _}, req, state), do: {:ok, req, state}
-                        def info({:chunk, _state}, req, state) do
+                        def info({:chunk, _state}, req, state) when unquote(chunked) == true do
                             %Args{response: %{body: body}} = process_out(_state)
                             :ok = :cowboy_req.chunk(body, req)
                             {:loop, req, state, :hibernate}
                         end
+                        def info({:chunk, _}, req, state), do: {:loop, req, state, :hibernate}
 
                         defp take_request_middleware(args=%Args{ middlewares: {[],_} }), do: {:empty, args}
                         defp take_request_middleware(args=%Args{ middlewares: {[head|tail], m} }), do: {:ok, head, %{args | middlewares: {tail, [head|m]}}}
