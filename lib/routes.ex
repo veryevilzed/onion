@@ -87,7 +87,7 @@ defmodule Onion.Routes do
                 end
             end #defmacro
 
-            defmacro pooling path, opts do
+            defmacro polling path, opts do
                 name = Dict.get(opts, :name, :"#{U.uuid}")
                 timeout = Dict.get(opts, :timeout, 5000)
                 chunked = Dict.get(opts, :chunked, false)
