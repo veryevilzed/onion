@@ -109,12 +109,10 @@ defmodule Onion.Routes do
                                 true -> :cowboy_req.chunked_reply(200, unquote(chunked_headers), req)
                                 _ -> {:ok, req}
                             end
-                            nstate = Keyword.has_key?(unquote(module).__info__(:functions), :begin) && apply(unquote(module), :begin, [state])
-                            state = case nstate do
-                                %Args{} -> nstate
-                                _ -> state
+                            task = spawn fn -> 
+                                Keyword.has_key?(unquote(module).__info__(:functions), :begin) && apply(unquote(module), :begin, [state])
+                                apply(unquote(module), :loop, [state, nil])
                             end
-                            task = spawn fn -> apply(unquote(module), :loop, [state, nil]) end
                             state = put_in(state, [:response, :extra, :pid], task)
                             {:loop, req, state, unquote(timeout), :hibernate}
                         end
