@@ -17,7 +17,7 @@ defmodule Onion.Mixfile do
 
   defp deps do
     [
-      { :cowboy, github: "extend/cowboy", branch: "1.0.x" }
+      { :cowboy, git: "https://github.com/extend/cowboy", branch: "1.0.x" }
     ]
   end
 end
