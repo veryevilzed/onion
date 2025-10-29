@@ -1,5 +1,5 @@
-%{"cowboy": {:git, "git://github.com/extend/cowboy.git", "b57f94661f5fd186f55eb0fead49849e0b1399d1", [branch: "1.0.x"]},
-  "cowlib": {:git, "git://github.com/ninenines/cowlib.git", "d544a494af4dbc810fc9c15eaf5cc050cced1501", [ref: "1.0.0"]},
+%{"cowboy": {:git, "https://github.com/extend/cowboy", "fd37fad592fc96a384bcd060696194f5fe074f6f", [tag: "fd37fad592fc96a384bcd060696194f5fe074f6f"]},
+  "cowlib": {:git, "https://github.com/ninenines/cowlib", "d544a494af4dbc810fc9c15eaf5cc050cced1501", [tag: "d544a494af4dbc810fc9c15eaf5cc050cced1501"]},
   "hexagon": {:git, "git://github.com/veryevilzed/hex.git", "d1afa9c9f37f85d32e6d2d8bf327fc8a15a12f42", []},
   "quickrand": {:git, "https://github.com/okeuday/quickrand.git", "82306eb82ff82c89c621b27305b48e17c18cace5", [tag: "v1.3.3"]},
-  "ranch": {:git, "git://github.com/ninenines/ranch.git", "adf1822defc2b7cfdc7aca112adabfa1d614043c", [ref: "1.0.0"]}}
+  "ranch": {:git, "https://github.com/ninenines/ranch", "adf1822defc2b7cfdc7aca112adabfa1d614043c", [tag: "adf1822defc2b7cfdc7aca112adabfa1d614043c"]}}
