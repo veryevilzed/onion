@@ -10,15 +10,14 @@ defmodule Onion.Mixfile do
 
   def application do
     [
-       applications: [:logger, :cowboy, :underscorex],
+       applications: [:logger, :cowboy],
        mod: {Onion.Application, []}
     ]
   end
 
   defp deps do
     [
-      { :cowboy, github: "extend/cowboy", branch: "1.0.x" },
-      { :underscorex, github: "veryevilzed/underscorex"}
+      { :cowboy, github: "extend/cowboy", branch: "1.0.x" }
     ]
   end
 end

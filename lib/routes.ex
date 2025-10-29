@@ -33,7 +33,7 @@ defmodule Onion.Routes do
 
 
             defmacro route path, opts do
-                name = Dict.get(opts, :name, :"#{U.uuid}")
+                name = Dict.get(opts, :name, :"#{Onion.Utils.uuid4()}")
                 quote do
 
                     routes = [{unquote(path), unquote(name), Enum.into(unquote(opts), %{})} | routes]
@@ -88,7 +88,7 @@ defmodule Onion.Routes do
             end #defmacro
 
             defmacro polling path, opts do
-                name = Dict.get(opts, :name, :"#{U.uuid}")
+                name = Dict.get(opts, :name, :"#{Onion.Utils.uuid4()}")
                 timeout = Dict.get(opts, :timeout, 5000)
                 chunked = Dict.get(opts, :chunked, false)
                 chunked_headers = Dict.get(opts, :chunked_headers, [])
